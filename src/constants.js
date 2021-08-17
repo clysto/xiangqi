@@ -11,44 +11,6 @@ export const INIT_MAP = [
   ['c0', 'm0', 'x0', 's0', 'j0', 's1', 'x1', 'm1', 'c1'],
 ];
 
-export const KEYS = {
-  c0: 'c',
-  c1: 'c',
-  m0: 'm',
-  m1: 'm',
-  x0: 'x',
-  x1: 'x',
-  s0: 's',
-  s1: 's',
-  j0: 'j',
-  p0: 'p',
-  p1: 'p',
-  z0: 'z',
-  z1: 'z',
-  z2: 'z',
-  z3: 'z',
-  z4: 'z',
-  z5: 'z',
-
-  C0: 'c',
-  C1: 'C',
-  M0: 'M',
-  M1: 'M',
-  X0: 'X',
-  X1: 'X',
-  S0: 'S',
-  S1: 'S',
-  J0: 'J',
-  P0: 'P',
-  P1: 'P',
-  Z0: 'Z',
-  Z1: 'Z',
-  Z2: 'Z',
-  Z3: 'Z',
-  Z4: 'Z',
-  Z5: 'Z',
-};
-
 export const MANS = {
   // 红子
   c: { text: '车', img: 'r_c', bl: 'c', color: 'red' },

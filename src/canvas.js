@@ -1,12 +1,25 @@
 import { getDomXY } from './common';
-import { Game } from './game';
 import { CANVAS_STYLE, MANS } from './constants';
+import clickWav from '../assets/click.wav';
+import selectWav from '../assets/select.wav';
+import killWav from '../assets/kill.wav';
+import checkmateWav from '../assets/checkmate.wav';
 const images = import.meta.globEager('../assets/*.png');
 
 export class GameCanvas {
   constructor(selector, game) {
     const dom = document.querySelector(selector);
     const canvas = document.createElement('canvas');
+
+    this.clickAudio = document.createElement('audio');
+    this.selectAudio = document.createElement('audio');
+    this.killAudio = document.createElement('audio');
+    this.checkmateAudio = document.createElement('audio');
+    this.clickAudio.src = clickWav;
+    this.selectAudio.src = selectWav;
+    this.killAudio.src = killWav;
+    this.checkmateAudio.src = checkmateWav;
+
     canvas.width = CANVAS_STYLE.width;
     canvas.height = CANVAS_STYLE.height;
     dom.appendChild(canvas);
@@ -16,11 +29,7 @@ export class GameCanvas {
     this.game = game;
     this.canvas.onclick = (e) => this.handleClickCanvas(e);
     this.loadAllImages().then(() => {
-      this.ctx.drawImage(this.resources.bgImg, 0, 0);
-      // 渲染所棋子
-      for (let key in this.game.mans) {
-        this.showMan(this.game.mans[key]);
-      }
+      this.update();
     });
   }
 
@@ -32,7 +41,7 @@ export class GameCanvas {
     this.resources.dotImg = await this.loadImage(
       images['../assets/dot.png'].default
     );
-    this.resources.paneImg = await this.loadImage(
+    this.resources.boxImg = await this.loadImage(
       images['../assets/r_box.png'].default
     );
     for (let key in MANS) {
@@ -66,17 +75,60 @@ export class GameCanvas {
     this.ctx.restore();
   }
 
+  showBox(x, y, newX, newY) {
+    this.ctx.drawImage(
+      this.resources.boxImg,
+      CANVAS_STYLE.spaceX * x + CANVAS_STYLE.pointStartX,
+      CANVAS_STYLE.spaceY * y + CANVAS_STYLE.pointStartY
+    );
+    this.ctx.drawImage(
+      this.resources.boxImg,
+      CANVAS_STYLE.spaceX * newX + CANVAS_STYLE.pointStartX,
+      CANVAS_STYLE.spaceY * newY + CANVAS_STYLE.pointStartY
+    );
+  }
+
   handleClickCanvas(e) {
     const key = this.getClickMan(e);
+    const point = this.getClickPoint(e);
     if (key) {
+      // 点击棋子
       const man = this.game.mans[key];
-      if (this.game.myColor == man.color) {
+      if (this.game.select && man.color !== this.game.turn) {
+        // 吃子
+        const result = this.game.move(man.x, man.y);
+        if (result) {
+          this.update();
+          this.clickAudio.play();
+          if (result.checkmate) {
+            this.checkmateAudio.play();
+          } else {
+            this.killAudio.play();
+          }
+        }
+      } else if (this.game.turn == man.color) {
+        // 选子
         this.game.select = man;
         this.update();
+        this.selectAudio.play();
+      }
+    } else {
+      // 点击空白
+      if (this.game.select) {
+        const { x, y } = point;
+        const result = this.game.move(x, y);
+        if (result) {
+          this.update();
+          this.clickAudio.play();
+          if (result.checkmate) {
+            this.checkmateAudio.play();
+          }
+        }
       }
     }
   }
 
+  // 获取点击的棋子
   getClickMan(e) {
     const clickXY = this.getClickPoint(e);
     const x = clickXY.x;
@@ -87,6 +139,7 @@ export class GameCanvas {
       : false;
   }
 
+  // 获取点击的点位
   getClickPoint(e) {
     const domXY = getDomXY(this.canvas);
     const x = Math.round(
@@ -95,7 +148,7 @@ export class GameCanvas {
     const y = Math.round(
       (e.pageY - domXY.y - CANVAS_STYLE.pointStartY - 20) / CANVAS_STYLE.spaceY
     );
-    return { x: x, y: y };
+    return { x, y };
   }
 
   update() {
@@ -114,12 +167,26 @@ export class GameCanvas {
       }
     }
     // 渲染棋子
-    for (let key in this.game.mans) {
-      if (this.game.select === this.game.mans[key]) {
-        this.showMan(this.game.mans[key], true);
-      } else {
-        this.showMan(this.game.mans[key]);
+    for (let y = 0; y < this.game.map.length; y++) {
+      for (let x = 0; x < this.game.map[y].length; x++) {
+        const key = this.game.map[y][x];
+        if (key) {
+          if (this.game.select === this.game.mans[key]) {
+            this.showMan(this.game.mans[key], true);
+          } else {
+            this.showMan(this.game.mans[key]);
+          }
+        }
       }
+    }
+    // 渲染方框
+    if (this.game.lastMove) {
+      this.showBox(
+        this.game.lastMove[0][0],
+        this.game.lastMove[0][1],
+        this.game.lastMove[1][0],
+        this.game.lastMove[1][1]
+      );
     }
   }
 }

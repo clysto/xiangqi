@@ -19,3 +19,14 @@ export function getDomXY(dom) {
   }
   return { x: left, y: top };
 }
+
+export function indexOfPosition(ps, xy) {
+  for (let i = 0; i < ps.length; i++) {
+    if (ps[i][0] == xy[0] && ps[i][1] == xy[1]) return true;
+  }
+  return false;
+}
+
+export function reverseColor(color) {
+  return color === 'red' ? 'black' : 'red';
+}
